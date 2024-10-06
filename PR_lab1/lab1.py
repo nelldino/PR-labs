@@ -1,20 +1,18 @@
 import bs4
 import requests
+import datetime
+from functools import reduce
 
 url = 'https://librarius.md'
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'}
 product_data = []  # List to hold all product information
 
-
 # Function to validate product data
 def validate_product_data(name, price, description):
     if not name:
         print("Validation failed: Product name is empty.")
         return False
-    # if not description:
-    #     print("Validation failed: Product description is empty.")
-    #     return False
 
     # Clean the price by removing non-numeric characters
     price_cleaned = price.replace('lei', '').strip()  # Remove 'lei' and any extra spaces
@@ -30,9 +28,8 @@ def validate_product_data(name, price, description):
 
     return True
 
-
-# Loop through 10 pages of the website
-for x in range(1, 10):
+# Loop through 1 page of the website
+for x in range(1, 2):
     r = requests.get(f'https://librarius.md/ro/books/page/{x}', headers=headers)
     soup = bs4.BeautifulSoup(r.text, features="html.parser")
 
@@ -68,8 +65,6 @@ for x in range(1, 10):
                 product_description = "No description available"
 
             # Validate product data before storing
-            # print(
-            #     f"Validating product: Name='{product_name}', Price='{product_price}', Description='{product_description}'")
             if validate_product_data(product_name, product_price, product_description):
                 book = {
                     'product_name': product_name,
@@ -79,9 +74,65 @@ for x in range(1, 10):
                 }
                 product_data.append(book)  # Append the product to the list
 
-                # Print the book data
-                print("Valid product:", book)
+                # Print the valid product data in the same format
+                print("Valid Product:")
+                print(f"Product Name: {book['product_name']}")
+                print(f"Product Price: {book['product_price']}")
+                print(f"Product Description: {book['product_description']}")
+                print(f"Product Link: {book['product_link']}")
+                print("\n" + "-" * 40 + "\n")  # Print a separator line for better readability
             else:
                 print(f"Product data validation failed for {product_name}.")
         else:
             print(f"No link found for product: {product_name}")
+
+    # The rest of your existing code continues here...
+
+
+# Define a price conversion function
+def convert_price(price_str):
+    # Extract numerical value from price string
+    if isinstance(price_str, float):  # If it's already a float, return it
+        return price_str
+    price_value = float(price_str.replace('lei', '').strip())
+    # Convert to EUR
+    return price_value * 0.05  # MDL to EUR conversion
+
+# Filter function to check if the product price is within a range
+def filter_price_range(product, min_price, max_price):
+    price_value = convert_price(product['product_price'])  # Convert to EUR for comparison
+    return min_price <= price_value <= max_price
+
+# Price range for filtering (example: 10 EUR to 50 EUR)
+min_price = 5
+max_price = 50
+
+# Mapping product prices and filtering products
+filtered_products = list(
+    filter(lambda product: filter_price_range(product, min_price, max_price), product_data)
+)
+
+# Convert prices to EUR for filtered products
+for product in filtered_products:
+    product['product_price'] = convert_price(product['product_price'])
+
+# Use reduce to calculate the sum of the filtered product prices
+total_price_eur = reduce(lambda acc, product: acc + product['product_price'], filtered_products, 0)
+
+# Create a new data model with the results
+result_data = {
+    'filtered_products': filtered_products,
+    'total_price': total_price_eur,
+    'timestamp': datetime.datetime.utcnow().isoformat()  # UTC timestamp
+}
+
+print("Filtered Products:")
+for product in result_data['filtered_products']:
+    print(f"Product Name: {product['product_name']}")
+    print(f"Product Price (EUR): {product['product_price']:.2f}")
+    print(f"Product Description: {product['product_description']}")
+    print(f"Product Link: {product['product_link']}")
+    print("\n" + "-"*40 + "\n")  # Print a separator line for better readability
+
+print(f"Total Price (EUR): {result_data['total_price']:.2f}")
+print(f"Timestamp: {result_data['timestamp']}")
