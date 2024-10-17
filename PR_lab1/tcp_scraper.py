@@ -159,19 +159,19 @@ result_data = {
 def escape_json_string(s):
     return s.replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r')
 
-
-def serialize_to_json(data):
+def serialize_to_json(data, indent_level=0):
+    indent = ' ' * (indent_level * 4)  # 4 spaces per indent level
     if isinstance(data, dict):
         json_items = []
         for key, value in data.items():
             json_key = f'"{escape_json_string(key)}"'
-            json_value = serialize_to_json(value)
-            json_items.append(f'{json_key}: {json_value}')
-        return '{' + ', '.join(json_items) + '}'
+            json_value = serialize_to_json(value, indent_level + 1)
+            json_items.append(f'{indent}    {json_key}: {json_value}')
+        return '{\n' + ',\n'.join(json_items) + f'\n{indent}}}'
 
     elif isinstance(data, list):
-        json_items = [serialize_to_json(item) for item in data]
-        return '[' + ', '.join(json_items) + ']'
+        json_items = [serialize_to_json(item, indent_level + 1) for item in data]
+        return '[\n' + ',\n'.join(json_items) + f'\n{indent}]'
 
     elif isinstance(data, str):
         return f'"{escape_json_string(data)}"'
@@ -190,59 +190,77 @@ print("Serialized JSON Data:")
 print(data_json)
 
 
-def serialize_to_xml(data, root_tag='root'):
-    """ Manually serialize data to XML format. """
+def serialize_to_xml(data, root_tag='root', indent_level=0):
+    """ Manually serialize data to XML format with indentation. """
+    indent = ' ' * (indent_level * 4)  # 4 spaces per indent level
     xml_items = []
 
-    def serialize_item(key, value):
+    def serialize_item(key, value, level):
+        inner_indent = ' ' * (level * 4)
         if isinstance(value, dict):
-            child_items = [f'<{k}>{serialize_item(k, v)}</{k}>' for k, v in value.items()]
-            return f'<{key}>{"".join(child_items)}</{key}>'
+            child_items = [
+                f'{inner_indent}<{k}>{serialize_item(k, v, level + 1)}</{k}>' for k, v in value.items()
+            ]
+            return f'\n{inner_indent}' + f'\n'.join(child_items) + f'\n{inner_indent}'
         elif isinstance(value, list):
-            item_tags = [f'<{key}_item>{serialize_item(key, item)}</{key}_item>' for item in value]
-            return f'<{key}>{"".join(item_tags)}</{key}>'
+            item_tags = [
+                f'{inner_indent}<{key}_item>{serialize_item(key, item, level + 1)}</{key}_item>'
+                for item in value
+            ]
+            return '\n' + '\n'.join(item_tags) + f'\n{inner_indent}'
         elif isinstance(value, str):
             return f'<![CDATA[{value}]]>'
         else:
             return str(value)
 
-    # Start the XML document
-    xml_items.append(f'<{root_tag}>')
+    # Start the XML document with indentation
+    xml_items.append(f'{indent}<{root_tag}>')
     for key, value in data.items():
-        xml_items.append(f'<{key}>{serialize_item(key, value)}</{key}>')
-    xml_items.append(f'</{root_tag}>')
+        xml_items.append(f'{indent}    <{key}>{serialize_item(key, value, indent_level + 1)}</{key}>')
+    xml_items.append(f'{indent}</{root_tag}>')
 
-    return ''.join(xml_items)
+    return '\n'.join(xml_items)
 
-
-# Serialize the result data to XML
 data_xml = serialize_to_xml(result_data)
-print("\nXML Data:")
+print("Serialized XML Data (Organized):")
 print(data_xml)
 
 
+
 # Custom Serialization Functions
-def custom_serialize(obj):
+def custom_serialize(obj, indent_level=0):
+    indent = ' ' * (indent_level * 4)  # Indentation level (4 spaces per level)
     if isinstance(obj, str):
-        return f"S[{len(obj)}]{obj}"
+        return f"{indent}S[{len(obj)}]{obj}"
     elif isinstance(obj, (int, float)):
-        return f"N{obj}"
+        return f"{indent}N{obj}"
     elif isinstance(obj, list):
-        serialized_list = ''.join([custom_serialize(item) for item in obj])
-        return f"L[{len(obj)}]{serialized_list}"
+        serialized_list = '\n'.join([custom_serialize(item, indent_level + 1) for item in obj])
+        return f"{indent}L[{len(obj)}]\n{serialized_list}"
     elif isinstance(obj, dict):
-        serialized_dict = ''.join([custom_serialize(k) + custom_serialize(v) for k, v in obj.items()])
-        return f"D[{len(obj)}]{serialized_dict}"
+        serialized_dict = '\n'.join(
+            [f"{indent}{custom_serialize(k, indent_level + 1)}{custom_serialize(v, indent_level + 1)}"
+             for k, v in obj.items()]
+        )
+        return f"{indent}D[{len(obj)}]\n{serialized_dict}"
     else:
         raise ValueError(f"Unsupported data type: {type(obj)}")
 
 
+# Example use
 def serialize_data(data):
     return custom_serialize(data)
 
 
 def custom_deserialize(data):
     def parse_value(data, idx):
+        # Skip any whitespace characters (spaces, newlines, tabs)
+        while idx < len(data) and data[idx].isspace():
+            idx += 1
+
+        if idx >= len(data):
+            raise ValueError("Reached the end of data unexpectedly.")
+
         type_marker = data[idx]
 
         if type_marker == 'S':
@@ -283,7 +301,7 @@ def custom_deserialize(data):
             return items, start_content
 
         else:
-            raise ValueError(f"Unknown type marker {type_marker}")
+            raise ValueError(f"Unknown type marker '{type_marker}' at index {idx}. Data: {data[idx:idx + 20]}")
 
     return parse_value(data, 0)[0]
 
