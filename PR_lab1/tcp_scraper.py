@@ -2,27 +2,14 @@ import socket
 import ssl
 import datetime
 from functools import reduce
-
-<<<<<<< HEAD
-import requests
-from bs4 import BeautifulSoup
-
-host = 'librarius.md'
-port = 443  # HTTPS uses port 443
-base_url = f"https://{host}"
-
-
-=======
 import requests  # To make HTTP requests
 from bs4 import BeautifulSoup
 
 # Target server and port
 host = 'librarius.md'
 port = 443  # HTTPS uses port 443
-base_url = f"https://{host}"  # Base URL for relative links
+base_url = f"https://{host}"
 
-# HTTP request template (GET request for a specific page)
->>>>>>> origin/main
 request = f"GET /ro/books/page/1 HTTP/1.1\r\nHost: {host}\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0.0.0 Safari/537.36\r\nConnection: close\r\n\r\n"
 
 # Create an SSL context
@@ -43,11 +30,6 @@ with socket.create_connection((host, port)) as sock:
                 break
             response_data += chunk
 
-<<<<<<< HEAD
-
-=======
-# Decode the response to string
->>>>>>> origin/main
 response_text = response_data.decode()
 
 # Find the start of the HTTP body (after headers)
@@ -55,51 +37,43 @@ header_end_idx = response_text.find("\r\n\r\n")
 if header_end_idx != -1:
     html_body = response_text[header_end_idx + 4:]  # The actual HTML content
 
-<<<<<<< HEAD
 # Pass the HTML body content to the scraping logic
 soup = BeautifulSoup(html_body, features="html.parser")
 
-def validate_product_data(name, price):
-=======
-# Pass the HTML body to BeautifulSoup for scraping
-soup = BeautifulSoup(html_body, features="html.parser")
 
 # Product validation function
 def validate_product_data(name, price, description):
->>>>>>> origin/main
     if not name:
         print("Validation failed: Product name is empty.")
         return False
 
-<<<<<<< HEAD
     price_cleaned = price.replace('lei', '').strip()
-
     try:
         price_value = float(price_cleaned)
-=======
-    # Clean the price by removing non-numeric characters
-    price_cleaned = price.replace('lei', '').strip()  # Remove 'lei' and any extra spaces
-
-    try:
-        price_value = float(price_cleaned)  # Convert cleaned price to float
->>>>>>> origin/main
         if price_value <= 0:
             print(f"Validation failed: Product price '{price}' must be greater than zero.")
             return False
     except ValueError:
-<<<<<<< HEAD
-        print(f"Validation failed: Product price '{price}' is not a valid number.") #it will fail when there is a product at sale
-=======
         print(f"Validation failed: Product price '{price}' is not a valid number.")
->>>>>>> origin/main
         return False
 
     return True
 
-<<<<<<< HEAD
-=======
-# Headers for making requests to individual product pages
->>>>>>> origin/main
+
+# Convert price from MDL to EUR
+def convert_price(price_str):
+    if isinstance(price_str, float):
+        return price_str
+    price_value = float(price_str.replace('lei', '').strip())
+    return price_value * 0.05
+
+
+# Filter products based on price range
+def filter_price_range(product, min_price, max_price):
+    price_value = convert_price(product['product_price'])
+    return min_price <= price_value <= max_price
+
+
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0.0.0 Safari/537.36'
 }
@@ -115,31 +89,24 @@ for product in productlist:
     product_link_tag = product.find('a', href=True)
     if product_link_tag:
         product_link = product_link_tag['href']
-<<<<<<< HEAD
+
         if not product_link.startswith('http'):
             product_link = base_url + product_link
 
-        #Get the description of a book
+        # Get the description of a book
         product_page = requests.get(product_link, headers=headers)
         product_soup = BeautifulSoup(product_page.text, features="html.parser")
 
         descriptions = product_soup.find_all('div', class_='book-page-description')
 
         # Since the HTML page contains two tags with the same class that differentiate by an id, we extract the one description class without that id
-=======
-        # If the href is a relative link, append the base URL
         if not product_link.startswith('http'):
             product_link = base_url + product_link
-
-        # Make a request to the product's detail page to get the description
-        product_page = requests.get(product_link, headers=headers)
-        product_soup = BeautifulSoup(product_page.text, features="html.parser")
 
         # Safely extract the description from the product page
         descriptions = product_soup.find_all('div', class_='book-page-description')
 
         # Check for the one without the id
->>>>>>> origin/main
         for desc in descriptions:
             if not desc.has_attr('id'):
                 product_description = desc.text.strip()
@@ -153,103 +120,193 @@ for product in productlist:
                 'product_name': product_name,
                 'product_price': product_price,
                 'product_description': product_description,
-<<<<<<< HEAD
                 'product_link': product_link
-            }
-            product_data.append(book)
-
-=======
-                'product_link': product_link  # Optionally store the link as well
             }
             product_data.append(book)  # Append the product to the list
 
             # Print the valid product data in the same format
             print("Valid Product:")
->>>>>>> origin/main
             print(f"Product Name: {book['product_name']}")
             print(f"Product Price: {book['product_price']}")
             print(f"Product Description: {book['product_description']}")
             print(f"Product Link: {book['product_link']}")
-<<<<<<< HEAD
             print("\n" + "-" * 40 + "\n")
-=======
-            print("\n" + "-" * 40 + "\n")  # Print a separator line for better readability
->>>>>>> origin/main
         else:
             print(f"Product data validation failed for {product_name}.")
     else:
         print(f"No link found for product: {product_name}")
-def convert_price(price_str):
-<<<<<<< HEAD
-    if isinstance(price_str, float):
-        return price_str
-    price_value = float(price_str.replace('lei', '').strip())
-    return price_value * 0.05
 
-# Filter function to check if the product price is within a range
-def filter_price_range(product, min_price, max_price):
-    price_value = convert_price(product['product_price'])
-    return min_price <= price_value <= max_price
-
+# Filter price range and calculate total
 min_price = 5
 max_price = 50
 
-=======
-    # Extract numerical value from price string
-    if isinstance(price_str, float):  # If it's already a float, return it
-        return price_str
-    price_value = float(price_str.replace('lei', '').strip())
-    # Convert to EUR
-    return price_value * 0.05  # MDL to EUR conversion
-
-# Filter function to check if the product price is within a range
-def filter_price_range(product, min_price, max_price):
-    price_value = convert_price(product['product_price'])  # Convert to EUR for comparison
-    return min_price <= price_value <= max_price
-
-# Price range for filtering (example: 10 EUR to 50 EUR)
-min_price = 5
-max_price = 50
-
-# Mapping product prices and filtering products
->>>>>>> origin/main
 filtered_products = list(
     filter(lambda product: filter_price_range(product, min_price, max_price), product_data)
 )
 
-<<<<<<< HEAD
 for product in filtered_products:
     product['product_price'] = convert_price(product['product_price'])
 
 total_price_eur = reduce(lambda acc, product: acc + product['product_price'], filtered_products, 0)
 
-=======
-# Convert prices to EUR for filtered products
-for product in filtered_products:
-    product['product_price'] = convert_price(product['product_price'])
-
-# Use reduce to calculate the sum of the filtered product prices
-total_price_eur = reduce(lambda acc, product: acc + product['product_price'], filtered_products, 0)
-
-# Create a new data model with the results
->>>>>>> origin/main
 result_data = {
     'filtered_products': filtered_products,
     'total_price': total_price_eur,
-    'timestamp': datetime.datetime.utcnow().isoformat()   # UTC timestamp
+    'timestamp': datetime.datetime.utcnow().isoformat()  # UTC timestamp
 }
 
-print("Filtered Products:")
-for product in result_data['filtered_products']:
-    print(f"Product Name: {product['product_name']}")
-    print(f"Product Price (EUR): {product['product_price']:.2f}")
-    print(f"Product Description: {product['product_description']}")
-    print(f"Product Link: {product['product_link']}")
-<<<<<<< HEAD
-    print("\n" + "-"*40 + "\n")
-=======
-    print("\n" + "-"*40 + "\n")  # Print a separator line for better readability
->>>>>>> origin/main
 
-print(f"Total Price (EUR): {result_data['total_price']:.2f}")
-print(f"Timestamp: {result_data['timestamp']}")
+def escape_json_string(s):
+    return s.replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r')
+
+
+def serialize_to_json(data):
+    if isinstance(data, dict):
+        json_items = []
+        for key, value in data.items():
+            json_key = f'"{escape_json_string(key)}"'
+            json_value = serialize_to_json(value)
+            json_items.append(f'{json_key}: {json_value}')
+        return '{' + ', '.join(json_items) + '}'
+
+    elif isinstance(data, list):
+        json_items = [serialize_to_json(item) for item in data]
+        return '[' + ', '.join(json_items) + ']'
+
+    elif isinstance(data, str):
+        return f'"{escape_json_string(data)}"'
+
+    elif isinstance(data, (int, float)):
+        return str(data)
+
+    elif data is None:
+        return 'null'
+
+    raise ValueError(f"Unsupported data type: {type(data)}")
+
+
+data_json = serialize_to_json(result_data)
+print("Serialized JSON Data:")
+print(data_json)
+
+
+def serialize_to_xml(data, root_tag='root'):
+    """ Manually serialize data to XML format. """
+    xml_items = []
+
+    def serialize_item(key, value):
+        if isinstance(value, dict):
+            child_items = [f'<{k}>{serialize_item(k, v)}</{k}>' for k, v in value.items()]
+            return f'<{key}>{"".join(child_items)}</{key}>'
+        elif isinstance(value, list):
+            item_tags = [f'<{key}_item>{serialize_item(key, item)}</{key}_item>' for item in value]
+            return f'<{key}>{"".join(item_tags)}</{key}>'
+        elif isinstance(value, str):
+            return f'<![CDATA[{value}]]>'
+        else:
+            return str(value)
+
+    # Start the XML document
+    xml_items.append(f'<{root_tag}>')
+    for key, value in data.items():
+        xml_items.append(f'<{key}>{serialize_item(key, value)}</{key}>')
+    xml_items.append(f'</{root_tag}>')
+
+    return ''.join(xml_items)
+
+
+# Serialize the result data to XML
+data_xml = serialize_to_xml(result_data)
+print("\nXML Data:")
+print(data_xml)
+
+
+# Custom Serialization Functions
+def custom_serialize(obj):
+    if isinstance(obj, str):
+        return f"S[{len(obj)}]{obj}"
+    elif isinstance(obj, (int, float)):
+        return f"N{obj}"
+    elif isinstance(obj, list):
+        serialized_list = ''.join([custom_serialize(item) for item in obj])
+        return f"L[{len(obj)}]{serialized_list}"
+    elif isinstance(obj, dict):
+        serialized_dict = ''.join([custom_serialize(k) + custom_serialize(v) for k, v in obj.items()])
+        return f"D[{len(obj)}]{serialized_dict}"
+    else:
+        raise ValueError(f"Unsupported data type: {type(obj)}")
+
+
+def serialize_data(data):
+    return custom_serialize(data)
+
+
+def custom_deserialize(data):
+    def parse_value(data, idx):
+        type_marker = data[idx]
+
+        if type_marker == 'S':
+            length_end_idx = data.index(']', idx)
+            length = int(data[idx + 2:length_end_idx])
+            start_content = length_end_idx + 1
+            return data[start_content:start_content + length], start_content + length
+
+        elif type_marker == 'N':
+            number_end_idx = idx + 1
+            while number_end_idx < len(data) and (data[number_end_idx].isdigit() or data[number_end_idx] == '.'):
+                number_end_idx += 1
+            return float(data[idx + 1:number_end_idx]), number_end_idx
+
+        elif type_marker == 'L':
+            length_end_idx = data.index(']', idx)
+            length = int(data[idx + 2:length_end_idx])
+            start_content = length_end_idx + 1
+            items = []
+            while length > 0:
+                item, next_idx = parse_value(data, start_content)
+                items.append(item)
+                start_content = next_idx
+                length -= 1
+            return items, start_content
+
+        elif type_marker == 'D':
+            length_end_idx = data.index(']', idx)
+            length = int(data[idx + 2:length_end_idx])
+            start_content = length_end_idx + 1
+            items = {}
+            while length > 0:
+                key, next_idx = parse_value(data, start_content)
+                value, next_idx = parse_value(data, next_idx)
+                items[key] = value
+                start_content = next_idx
+                length -= 1
+            return items, start_content
+
+        else:
+            raise ValueError(f"Unknown type marker {type_marker}")
+
+    return parse_value(data, 0)[0]
+
+
+def deserialize_data(serialized_str):
+    return custom_deserialize(serialized_str)
+
+
+serialized = serialize_data(result_data)
+print("Serialized Data:")
+print(serialized)
+
+deserialized = deserialize_data(serialized)
+print("\nDeserialized Data:")
+print(deserialized)
+
+data_json= serialize_to_json(result_data)
+data_xml= serialize_to_xml(result_data)
+
+url = 'http://localhost:8000/upload'
+
+response_json = requests.post(url, data=data_json, headers={'Content-Type': 'application/json'}, auth=('301', '408'))
+print('JSON Response:', response_json.status_code, response_json.text)
+
+response_xml = requests.post(url, data=data_xml, headers={'Content-Type': 'application/xml'}, auth=('301', '408'))
+print('XML Response:', response_xml.status_code, response_xml.text)
