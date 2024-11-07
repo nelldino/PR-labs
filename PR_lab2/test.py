@@ -1,7 +1,7 @@
 import requests
 
 url = "http://127.0.0.1:8000/upload-json/"
-file_path = "books.json"  # replace with the actual file path
+file_path = "books.json"
 
 with open(file_path, "rb") as f:
     files = {"file": (file_path, f, "application/json")}
