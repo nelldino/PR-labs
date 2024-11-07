@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base  # Updated import
 import datetime
 
 # Initialize database engine and session
-engine = create_engine('postgresql://postgres:Admin@localhost:5432/book_database')
+engine = create_engine('postgresql://postgres:Admin@db:5432/book_database')
 Session = sessionmaker(bind=engine)
 session = Session()
 Base = declarative_base()  # No change needed here since the import is updated

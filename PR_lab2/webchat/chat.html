@@ -6,8 +6,11 @@
 <body>
     <h1>WebSocket Chat</h1>
     <div id="chatbox"></div>
+    <input type="text" id="room" placeholder="Enter room name">
     <input type="text" id="message" placeholder="Type a message...">
-    <button onclick="sendMessage()">Send</button>
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="sendMessage()">Send Message</button>
+    <button onclick="leaveRoom()">Leave Room</button>
 
     <script src="communication.js"></script>
 </body>
