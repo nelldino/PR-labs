@@ -14,11 +14,10 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    price_mdl = Column(Float, nullable=False)
+    # price_mdl = Column(Float, nullable=False)
     price_eur = Column(Float, nullable=False)
     description = Column(Text, nullable=True)
     link = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
 # Create the table
 Base.metadata.create_all(engine)

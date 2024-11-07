@@ -323,8 +323,8 @@ data_xml= serialize_to_xml(result_data)
 
 url = 'http://localhost:8000/upload'
 
-response_json = requests.post(url, data=data_json, headers={'Content-Type': 'application/json'}, auth=('301', '408'))
+response_json = requests.post(url, data=data_json, headers={'Content-Type': 'application/json'}, auth=('408', '404'))
 print('JSON Response:', response_json.status_code, response_json.text)
 
-response_xml = requests.post(url, data=data_xml, headers={'Content-Type': 'application/xml'}, auth=('301', '408'))
+response_xml = requests.post(url, data=data_xml, headers={'Content-Type': 'application/xml'}, auth=('408', '404'))
 print('XML Response:', response_xml.status_code, response_xml.text)
