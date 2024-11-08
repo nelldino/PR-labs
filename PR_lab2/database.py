@@ -6,7 +6,7 @@ import datetime
 engine = create_engine('postgresql://postgres:Admin@db:5432/book_database')
 Session = sessionmaker(bind=engine)
 session = Session()
-Base = declarative_base()  # No change needed here since the import is updated
+Base = declarative_base()
 
 # Define Product model
 class Product(Base):
