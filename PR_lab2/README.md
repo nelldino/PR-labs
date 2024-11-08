@@ -1,4 +1,4 @@
 ![img.png](img.png)
 
-this is hoe second lab made me feel :((
+this is how second lab made me feel :((
 
