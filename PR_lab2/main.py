@@ -7,7 +7,7 @@ app = FastAPI()
 
 # CREATE operation
 @app.post("/products/", response_model=dict)
-def create_product(name: str, price_mdl: float, price_eur: float, description: str = "", link: str = "",
+def create_product(name: str, price_eur: float, description: str = "", link: str = "",
                    db: Session = Depends(database.get_db)):
     db_product = database.Product(name=name, price_eur=price_eur, description=description, link=link)
     db.add(db_product)

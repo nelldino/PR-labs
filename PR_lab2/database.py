@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text, DateTime
-from sqlalchemy.orm import sessionmaker, declarative_base  # Updated import
-import datetime
+from sqlalchemy import create_engine, Column, Integer, String, Float, Text
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Initialize database engine and session
 engine = create_engine('postgresql://postgres:Admin@db:5432/book_database')
